@@ -12,6 +12,7 @@
 from six import iteritems
 
 from docutils import nodes
+import fnmatch
 
 from sphinx import addnodes
 from sphinx.util import url_re, logging
@@ -78,6 +79,19 @@ class TocTreeCollector(EnvironmentCollector):
             return result
 
         def build_toc(node, depth=1):
+            def desc_to_heading(desc):
+                fullobjtype = '%s:%s' % (sectionnode['domain'], sectionnode['objtype'])
+                for pat in app.env.config.objects_to_be_heading:
+                    neg = False
+                    if pat and pat[0] == '!':
+                        neg = True
+                        pat = pat[1:]
+                    if fnmatch.fnmatch(fullobjtype, pat):
+                        if neg:
+                            return None
+                        return desc
+                return None
+
             entries = []
             for sectionnode in node:
                 # find all toctree nodes in this section and add them
@@ -90,7 +104,16 @@ class TocTreeCollector(EnvironmentCollector):
                         onlynode += blist.children
                         entries.append(onlynode)
                     continue
-                if not isinstance(sectionnode, nodes.section):
+                if isinstance(sectionnode, addnodes.desc):
+                    sectionnode = desc_to_heading(sectionnode)
+                    if sectionnode is None:
+                        continue
+                    if not sectionnode[0]['ids']:
+                        sectionnode[0]['ids'] += ['idx%d' % (numentries[0] + 1,)]
+                    anchorname = '#' + sectionnode[0]['ids'][0]
+                elif isinstance(sectionnode, nodes.section):
+                    anchorname = '#' + sectionnode['ids'][0]
+                else:
                     for toctreenode in traverse_in_section(sectionnode,
                                                            addnodes.toctree):
                         item = toctreenode.copy()
@@ -108,8 +131,6 @@ class TocTreeCollector(EnvironmentCollector):
                     # for the very first toc entry, don't add an anchor
                     # as it is the file's title anyway
                     anchorname = ''
-                else:
-                    anchorname = '#' + sectionnode['ids'][0]
                 numentries[0] += 1
                 # make these nodes:
                 # list_item -> compact_paragraph -> reference

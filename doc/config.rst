@@ -352,6 +352,16 @@ General configuration
 
    .. versionadded:: 1.5
 
+.. confval:: objects_to_be_heading
+
+   Nodes created by specified directives will be a heading.
+   For exasample, ``['py:function', 'py:method']``, ``['py:*']`` or
+   ``['*:function']``.
+
+   Default is ``[]``
+
+   .. versionadded:: FIXME
+
 Project information
 -------------------
 

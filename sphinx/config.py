@@ -132,6 +132,7 @@ class Config(object):
 
         tls_verify = (True, 'env'),
         tls_cacerts = (None, 'env'),
+        objects_to_be_heading = ([], 'env'),
     )  # type: Dict[unicode, Tuple]
 
     def __init__(self, dirname, filename, overrides, tags):

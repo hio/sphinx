@@ -781,22 +781,25 @@ class PythonDomain(Domain):
         objects = self.data['objects']
         matches = []  # type: List[Tuple[unicode, Any]]
 
+        if type is None:
+            objtypes = list(self.object_types)
+        else:
+            objtypes = self.objtypes_for_role(type)
+
+        def in_objects_with_valid_type(oname):
+            return oname in objects and objects[oname][1] in objtypes
+
         newname = None
         if searchmode == 1:
-            if type is None:
-                objtypes = list(self.object_types)
-            else:
-                objtypes = self.objtypes_for_role(type)
             if objtypes is not None:
                 if modname and classname:
                     fullname = modname + '.' + classname + '.' + name
-                    if fullname in objects and objects[fullname][1] in objtypes:
+                    if in_objects_with_valid_type(fullname):
                         newname = fullname
                 if not newname:
-                    if modname and modname + '.' + name in objects and \
-                       objects[modname + '.' + name][1] in objtypes:
+                    if modname and in_objects_with_valid_type(modname + '.' + name):
                         newname = modname + '.' + name
-                    elif name in objects and objects[name][1] in objtypes:
+                    elif in_objects_with_valid_type(name):
                         newname = name
                     else:
                         # "fuzzy" searching mode
@@ -805,26 +808,26 @@ class PythonDomain(Domain):
                                    if oname.endswith(searchname) and
                                    objects[oname][1] in objtypes]
         else:
-            # NOTE: searching for exact match, object type is not considered
             if name in objects:
+                # NOTE: searching for exact match, object type is not considered
                 newname = name
             elif type == 'mod':
                 # only exact matches allowed for modules
                 return []
-            elif classname and classname + '.' + name in objects:
+            elif classname and in_objects_with_valid_type(classname + '.' + name):
                 newname = classname + '.' + name
-            elif modname and modname + '.' + name in objects:
+            elif modname and in_objects_with_valid_type(modname + '.' + name):
                 newname = modname + '.' + name
             elif modname and classname and \
-                    modname + '.' + classname + '.' + name in objects:
+                    in_objects_with_valid_type(modname + '.' + classname + '.' + name):
                 newname = modname + '.' + classname + '.' + name
             # special case: builtin exceptions have module "exceptions" set
             elif type == 'exc' and '.' not in name and \
-                    'exceptions.' + name in objects:
+                    in_objects_with_valid_type('exceptions.' + name):
                 newname = 'exceptions.' + name
             # special case: object methods
             elif type in ('func', 'meth') and '.' not in name and \
-                    'object.' + name in objects:
+                    in_objects_with_valid_type('object.' + name):
                 newname = 'object.' + name
         if newname is not None:
             matches.append((newname, objects[newname]))

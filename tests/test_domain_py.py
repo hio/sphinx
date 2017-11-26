@@ -182,6 +182,11 @@ def test_domain_py_find_obj(app, status, warning):
     assert (find_obj(None, u'NestedParentA.NestedChildA', u'subchild_1', u'meth') ==
             [(u'NestedParentA.NestedChildA.subchild_1', (u'roles', u'method'))])
 
+    assert (find_obj(u'module_b.submodule', None, 'foo', u'func') ==
+            [(u'module_b.submodule.foo', ('module', 'function'))])
+    assert (find_obj(u'module_b.submodule', None, 'foo', u'class') ==
+            [])
+
 
 def test_get_full_qualified_name():
     env = Mock(domaindata={})
